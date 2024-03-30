@@ -182,11 +182,6 @@ class RubikCube:
         return True
 
 
-class NodeAstar(Node):
-    def __init__(self, row, col):
-        super().__init__(row, col)
-        self.distance = 0
-
 class RubikSolver:
     def __init__(self):
         self.cube = RubikCube()
