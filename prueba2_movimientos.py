@@ -7,8 +7,17 @@ class Node:
         self.cube = cube 
         self.path = []
 
-
 class RubikCube:
+
+    resolved_cube = np.array([
+        [[0] * 3 for _ in range(3)],  # Face 0 (Left)
+        [[1] * 3 for _ in range(3)],  # Face 1 (Front)
+        [[2] * 3 for _ in range(3)],  # Face 2 (Up)
+        [[3] * 3 for _ in range(3)],  # Face 3 (Down)
+        [[4] * 3 for _ in range(3)],  # Face 4 (Right)
+        [[5] * 3 for _ in range(3)],  # Face 5 (Back)
+    ])
+
     def __init__(self):
         # Arreglo tridimensional 
         self.cube = np.array([
@@ -19,8 +28,6 @@ class RubikCube:
             [[4] * 3 for _ in range(3)],  # Face 4 (Right)
             [[5] * 3 for _ in range(3)],  # Face 5 (Back)
         ])  
-
-        self.initial_state = np.copy(self.cube)
 
         self.movements = {
             'R' : self.vertical_2_up, 
@@ -173,46 +180,70 @@ class RubikCube:
             self.__z_right(0, 5)
             self.__z_right(0, 5)
         return self.cube
+    
+    # Funcion shuffle para revolver el cubo
+    def shuffle(self, N):
+        for _ in range(N):
+            movement = random.randint(0, 11)
+            if movement == 0:
+                self.horizontal_0_left()
+            elif movement == 1:
+                self.horizontal_0_right()
+            elif movement == 2:
+                self.horizontal_2_left()
+            elif movement == 3:
+                self.horizontal_2_right()
+            elif movement == 4:
+                self.vertical_0_down()
+            elif movement == 5:
+                self.vertical_0_up()
+            elif movement == 6:
+                self.vertical_2_down()
+            elif movement == 7:
+                self.vertical_2_up()
+            elif movement == 8:
+                self.z_back_left()
+            elif movement == 9:
+                self.z_back_right()
+            elif movement == 10:
+                self.z_front_left()
+            elif movement == 11:
+                self.z_front_right()        
 
+            
+    # Funcion para verificar si el cubo esta resuelto
     def is_solved(self):
-        for i in range (6):
-            if not np.array_equal(self.cube[i], self.initial_state[i]):
+        for i in range(6):
+            if not np.array_equal(self.cube[i], self.resolved_cube[i]):
                 return False
-        
         return True
-
-
+    
 class RubikSolver:
     def __init__(self):
         self.cube = RubikCube()
-    
-    def beradth_first_search(self, node):
+
+    # BFS sin heuristica
+    def breadth_first_search(self, node):
         visited = set()
         q = Queue()
         q.put(node)
-        visited.add(node)
+        visited.add(tuple(node.cube.flatten()))
 
         while not q.empty():
             current_node = q.get()
+            print('jiij')
 
             if self.cube.is_solved():
                 return current_node.path
             
             for move in self.cube.movements.keys():
                 next_cube = RubikCube()
+                next_cube.cube = np.copy(current_node.cube)
+                next_cube.movements[move]()
+
+                if tuple(next_cube.cube.flatten()) not in visited:
+                    next_node = Node(next_cube.cube)
+                    next_node.path = current_node.path + [move]
+                    q.put(next_node)
+                    visited.add(tuple(next_node.cube.flatten()))
             
-            
-
-
-
-    
-    
-
-    
-rubik = RubikSolver()
-
-print("Estado inicial:")
-print(rubik.cube)
-print("Estado despues:")
-rubik.z_back_left()
-print(rubik.cube)
