@@ -227,7 +227,6 @@ class RubikSolver:
 
         while not q.empty():
             current_node = q.get()
-            print('jiij')
 
             if current_node.is_cube_solved(RubikCube.resolved_cube):
                 return current_node.path
