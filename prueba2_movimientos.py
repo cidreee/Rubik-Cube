@@ -6,9 +6,11 @@ class Node:
     def __init__(self, cube):
         self.cube = cube 
         self.path = []
+    
+    def is_cube_solved(self, resolved_cube):
+        return np.array_equal(self.cube, resolved_cube)
 
 class RubikCube:
-
     resolved_cube = np.array([
         [[0] * 3 for _ in range(3)],  # Face 0 (Left)
         [[1] * 3 for _ in range(3)],  # Face 1 (Front)
@@ -210,20 +212,14 @@ class RubikCube:
             elif movement == 11:
                 self.z_front_right()        
 
-            
-    # Funcion para verificar si el cubo esta resuelto
-    def is_solved(self):
-        for i in range(6):
-            if not np.array_equal(self.cube[i], self.resolved_cube[i]):
-                return False
-        return True
     
 class RubikSolver:
     def __init__(self):
         self.cube = RubikCube()
 
     # BFS sin heuristica
-    def breadth_first_search(self, node):
+    def breadth_first_search(self):
+        node = Node(self.cube.cube)
         visited = set()
         q = Queue()
         q.put(node)
@@ -233,9 +229,9 @@ class RubikSolver:
             current_node = q.get()
             print('jiij')
 
-            if self.cube.is_solved():
+            if current_node.is_cube_solved(RubikCube.resolved_cube):
                 return current_node.path
-            
+ 
             for move in self.cube.movements.keys():
                 next_cube = RubikCube()
                 next_cube.cube = np.copy(current_node.cube)
@@ -246,4 +242,16 @@ class RubikSolver:
                     next_node.path = current_node.path + [move]
                     q.put(next_node)
                     visited.add(tuple(next_node.cube.flatten()))
+            
+
+    
+rubik = RubikSolver()
+rubik.cube.shuffle(1)  # Revuelve el cubo con 1 movimientos aleatorios
+print(rubik.cube.cube)
+
+solution = rubik.breadth_first_search()
+
+print(solution)
+
+
             
