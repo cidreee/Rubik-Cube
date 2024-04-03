@@ -1,6 +1,28 @@
 import numpy as np
 from queue import Queue
 import random
+from queue import PriorityQueue
+
+class Heuristics:
+    @staticmethod
+    def hamming_distance(node_a, node_b):
+        cube_a = node_a.cube.flatten()
+        cube_b = node_b.cube.flatten()
+
+        return np.count_nonzero(cube_a != cube_b)
+
+    @staticmethod
+    def manhattan_distance(node_a, node_b):
+        cube_a = node_a.cube.flatten()
+        cube_b = node_b.cube.flatten()
+
+        cube_a_coord = np.array(np.unravel_index(np.arange(len(cube_a)), cube_a.shape)).T
+        cube_b_coord = np.array(np.unravel_index(np.arange(len(cube_b)), cube_b.shape)).T
+        return np.sum(np.abs(cube_a_coord - cube_b_coord))
+
+    @staticmethod
+    def heuristic3():
+        pass
 
 class Node:
     def __init__(self, cube):
@@ -9,6 +31,35 @@ class Node:
     
     def is_cube_solved(self, resolved_cube):
         return np.array_equal(self.cube, resolved_cube)
+
+class HeuristicNode:
+    def __init__(self, cube):
+        self.cube = cube
+
+        self.heuristic_value = -1
+        self.path =  []
+    
+    def calculate_heuristic(self, heuristic_function, target):
+        return heuristic_function(self, target)
+    
+    def is_cube_solved(self, resolved_cube):
+        return np.array_equal(self.cube, resolved_cube)
+    
+    def __eq__(self, other):
+        if not isinstance(other, HeuristicNode):
+            return False
+        return np.array_equal(self.cube, other.cube)
+    
+    def __lt__(self, other):
+        if not isinstance(other, HeuristicNode):
+            return False
+        return self.heuristic_value < other.heuristic_value
+    
+    def __gt__(self, other):
+        if not isinstance(other, HeuristicNode):
+            return False
+        return self.heuristic_value > other.heuristic_value
+
 
 class RubikCube:
     resolved_cube = np.array([
@@ -46,11 +97,43 @@ class RubikCube:
             'B1' : self.z_back_right
         }
 
+        self.movements_opuestos = {
+            'R': 'L',
+            'L': 'R',
+            'U': 'U1',
+            'R1': 'L1',
+            'L1': 'R1',
+            'U1': 'U',
+            'D': 'D1',
+            'F': 'F1',
+            'B': 'B1',
+            'D1': 'D',
+            'F1': 'F',
+            'B1': 'B'
+        }
+
     def __rotate_face(self, face, clockwise=True):
         if clockwise:
             self.cube[face] = np.rot90(self.cube[face], -1)
         else:
             self.cube[face] = np.rot90(self.cube[face])
+    
+    def __rotate_face(self, face, clockwise=True):
+        if clockwise:
+            temp = np.copy(self.cube[face])
+            temp_rotated = np.zeros((3, 3), dtype=int)
+            for i in range(3):
+                for j in range(3):
+                    temp_rotated[i][j] = temp[2 - j][i]
+            self.cube[face] = temp_rotated
+
+        else:
+            temp = np.copy(self.cube[face])
+            temp_rotated = np.zeros((3, 3), dtype=int)
+            for i in range(3):
+                for j in range(3):
+                    temp_rotated[i][j] = temp[j][2 - i]
+            self.cube[face] = temp_rotated
     
     # Funciones priv para movimientos
             
@@ -210,7 +293,23 @@ class RubikCube:
             elif movement == 10:
                 self.z_front_left()
             elif movement == 11:
-                self.z_front_right()        
+                self.z_front_right()  
+
+    # Funcion shuffle para revolver el cubo
+    def shuffle_unrepeat(self, N):
+        prev_movement = None
+        for _ in range(N):
+            movement_key = random.choice(list(self.movements.keys()))
+            movement = self.movements[movement_key]
+
+            # Verificar si el movimiento actual es opuesto al movimiento anterior
+            if prev_movement is not None and self.movements_opuestos[prev_movement] == movement_key:
+                while self.movements_opuestos[prev_movement] == movement_key:
+                    movement_key = random.choice(list(self.movements.keys()))
+                    movement = self.movements[movement_key]
+
+            movement()
+            prev_movement = movement_key    
 
     
 class RubikSolver:
@@ -241,12 +340,47 @@ class RubikSolver:
                     next_node.path = current_node.path + [move]
                     q.put(next_node)
                     visited.add(tuple(next_node.cube.flatten()))
+    
+    # BFS con heuristica
+    def best_first_search(self, heuristic):
+        node = HeuristicNode(self.cube.cube)
+        target_node = HeuristicNode(RubikCube.resolved_cube)
+        node.heuristic_value = node.calculate_heuristic(heuristic, target_node)
+        visited = set()
+        q = PriorityQueue()
+        q.put(node)
+        visited.add(tuple(node.cube.flatten()))
+        
+        while not q.empty():
+            current_node = q.get()
+
+            if current_node.is_cube_solved(RubikCube.resolved_cube):
+                return current_node.path
             
+            for move in self.cube.movements.keys():
+                next_cube = RubikCube()
+                next_cube.cube = np.copy(current_node.cube)
+                next_cube.movements[move]()
+            
+                if tuple(next_cube.cube.flatten()) not in visited:
+                    next_node = HeuristicNode(next_cube.cube)
+                    next_node.heuristic_value = next_node.calculate_heuristic(heuristic, target_node)
+                    next_node.path = current_node.path + [move]
+                    q.put(next_node)
+                    visited.add(tuple(next_node.cube.flatten()))
+
 
     
 rubik = RubikSolver()
-rubik.cube.shuffle(1)  # Revuelve el cubo con 1 movimientos aleatorios
+rubik.cube.shuffle(3)  # Revuelve el cubo con movimientos aleatorios
 print(rubik.cube.cube)
+print('\n')
+solution = rubik.breadth_first_search()
+
+print(solution)
+
+
+
 
 solution = rubik.breadth_first_search()
 
