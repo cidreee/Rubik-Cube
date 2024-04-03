@@ -379,12 +379,3 @@ solution = rubik.breadth_first_search()
 
 print(solution)
 
-
-
-
-solution = rubik.breadth_first_search()
-
-print(solution)
-
-
-            
