@@ -12,14 +12,14 @@ class Heuristics:
         return np.count_nonzero(cube_a != cube_b)
 
     @staticmethod
-    def manhattan_distance(node_a, node_b):
-        cube_a = node_a.cube.flatten()
-        cube_b = node_b.cube.flatten()
-
-        cube_a_coord = np.array(np.unravel_index(np.arange(len(cube_a)), cube_a.shape)).T
-        cube_b_coord = np.array(np.unravel_index(np.arange(len(cube_b)), cube_b.shape)).T
-        return np.sum(np.abs(cube_a_coord - cube_b_coord))
-
+    def manhattan_distance(node1, node2):
+        distance = 0
+        for i in range(6):  # Recorrer cada cara del cubo
+            face1 = node1.cube[i]
+            face2 = node2.cube[i]
+            distance += np.sum(np.abs(face1 - face2))
+        return distance
+        
     @staticmethod
     def heuristic3():
         pass
