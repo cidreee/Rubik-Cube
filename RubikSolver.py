@@ -266,6 +266,12 @@ class RubikCube:
             self.__z_right(0, 5)
         return self.cube
     
+    def move_list(self, moves_list):
+        moves = moves_list.split()
+        for move in moves:
+            if move in self.movements:
+                self.movements[move]()
+    
     # Funcion shuffle para revolver el cubo
     def shuffle(self, N):
         for _ in range(N):
@@ -372,10 +378,11 @@ class RubikSolver:
 
     
 rubik = RubikSolver()
-rubik.cube.shuffle(3)  # Revuelve el cubo con movimientos aleatorios
+# rubik.cube.shuffle(3)  # Revuelve el cubo con movimientos aleatorios
+moves = "R L B F"
+rubik.cube.move_list(moves)
 print(rubik.cube.cube)
 print('\n')
 solution = rubik.breadth_first_search()
 
 print(solution)
-
