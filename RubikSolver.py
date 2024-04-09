@@ -288,6 +288,12 @@ class RubikCube:
             self.__z_right(0, 5)
             self.__z_right(0, 5)
         return self.cube
+
+    def move_list(self, moves_list):
+        moves = moves_list.split()
+        for move in moves:
+            if move in self.movements:
+                self.movements[move]()
     
     # Funcion shuffle para revolver el cubo
     def shuffle(self, N):
@@ -368,7 +374,7 @@ class RubikSolver:
     
     # BFS con heuristica
     def best_first_search(self, heuristic):
-        node = HeuristicNode(np.copy(self.cube.cube))
+        node = HeuristicNode(self.cube.cube)
         target_node = HeuristicNode(RubikCube.resolved_cube)
         node.heuristic_value = node.calculate_heuristic(heuristic, target_node)
         visited = set()
@@ -378,20 +384,22 @@ class RubikSolver:
         
         while not q.empty():
             current_node = q.get()
+
             if current_node.is_cube_solved(RubikCube.resolved_cube):
                 return current_node.path
             
             for move in self.cube.movements.keys():
-                next_cube = np.copy(current_node.cube)
-                self.cube.cube = next_cube
-                self.cube.movements[move]()
-
-                if tuple(self.cube.cube.flatten()) not in visited:
-                    next_node = HeuristicNode(np.copy(self.cube.cube))
+                next_cube = RubikCube()
+                next_cube.cube = np.copy(current_node.cube)
+                next_cube.movements[move]()
+            
+                if tuple(next_cube.cube.flatten()) not in visited:
+                    next_node = HeuristicNode(next_cube.cube)
                     next_node.heuristic_value = next_node.calculate_heuristic(heuristic, target_node)
                     next_node.path = current_node.path + [move]
                     q.put(next_node)
                     visited.add(tuple(next_node.cube.flatten()))
+
 
 
     def a_star(self, heuristic):
