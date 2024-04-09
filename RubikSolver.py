@@ -65,25 +65,21 @@ class HeuristicNode:
     def is_cube_solved(self, resolved_cube):
         return np.array_equal(self.cube, resolved_cube)
     
-    '''
     def __eq__(self, other):
         if not isinstance(other, HeuristicNode):
             return False
         return np.array_equal(self.cube, other.cube)
-    '''
     
     def __lt__(self, other):
         if not isinstance(other, HeuristicNode):
             return False
         return self.heuristic_value < other.heuristic_value
     
-    '''
     def __gt__(self, other):
         if not isinstance(other, HeuristicNode):
             return False
         return self.heuristic_value > other.heuristic_value
-    '''
-
+    
 class RubikCube:
     resolved_cube = np.array([
         [[0] * 3 for _ in range(3)],  # Face 0 (Left)
@@ -135,11 +131,6 @@ class RubikCube:
             'B1': 'B'
         }
 
-    def __rotate_face4(self, face, clockwise=True):
-        if clockwise:
-            self.cube[face] = np.rot90(self.cube[face], -1)
-        else:
-            self.cube[face] = np.rot90(self.cube[face])
     
     def __rotate_face(self, face, clockwise=True):
         if clockwise:
@@ -288,12 +279,6 @@ class RubikCube:
             self.__z_right(0, 5)
             self.__z_right(0, 5)
         return self.cube
-
-    def move_list(self, moves_list):
-        moves = moves_list.split()
-        for move in moves:
-            if move in self.movements:
-                self.movements[move]()
     
     # Funcion shuffle para revolver el cubo
     def shuffle(self, N):
@@ -326,6 +311,12 @@ class RubikCube:
             
             print(movement)
 
+    def move_list(self, moves_list):
+        moves = moves_list.split()
+        for move in moves:
+            if move in self.movements:
+                self.movements[move]()
+
     # Funcion shuffle para revolver el cubo
     def shuffle_unrepeat(self, N):
         prev_movement = None
@@ -340,8 +331,8 @@ class RubikCube:
                     movement = self.movements[movement_key]
 
             movement()
-            prev_movement = movement_key    
-
+            prev_movement = movement_key
+    
     
 class RubikSolver:
     def __init__(self):
@@ -389,17 +380,16 @@ class RubikSolver:
                 return current_node.path
             
             for move in self.cube.movements.keys():
-                next_cube = RubikCube()
-                next_cube.cube = np.copy(current_node.cube)
-                next_cube.movements[move]()
-            
-                if tuple(next_cube.cube.flatten()) not in visited:
-                    next_node = HeuristicNode(next_cube.cube)
+                next_cube = np.copy(current_node.cube)
+                self.cube.cube = next_cube
+                self.cube.movements[move]()
+
+                if tuple(self.cube.cube.flatten()) not in visited:
+                    next_node = HeuristicNode(self.cube.cube)
                     next_node.heuristic_value = next_node.calculate_heuristic(heuristic, target_node)
                     next_node.path = current_node.path + [move]
                     q.put(next_node)
                     visited.add(tuple(next_node.cube.flatten()))
-
 
 
     def a_star(self, heuristic):
