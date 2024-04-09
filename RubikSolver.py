@@ -19,7 +19,7 @@ class Heuristics:
             face2 = node2.cube[i]
             distance += np.sum(np.abs(face1 - face2))
         return distance
-        
+    
     @staticmethod
     def heuristic3():
         pass
@@ -31,6 +31,26 @@ class Node:
     
     def is_cube_solved(self, resolved_cube):
         return np.array_equal(self.cube, resolved_cube)
+    
+class Node_A_Star:
+    def __init__(self, cube):
+        self.cube = cube
+        self.path = []
+        self.distance = 0
+        self.total = 0
+        self.heuristic_value = -1
+    
+    def is_cube_solved(self, resolved_cube):
+        return np.array_equal(self.cube, resolved_cube)
+    
+    def calculate_heuristic(self, heuristic_function, target):
+        return heuristic_function(self, target)
+
+    def __lt__(self, other):
+        if not isinstance(other, Node_A_Star):
+            return False
+        return self.heuristic_value < other.heuristic_value
+        
 
 class HeuristicNode:
     def __init__(self, cube):
@@ -45,21 +65,24 @@ class HeuristicNode:
     def is_cube_solved(self, resolved_cube):
         return np.array_equal(self.cube, resolved_cube)
     
+    '''
     def __eq__(self, other):
         if not isinstance(other, HeuristicNode):
             return False
         return np.array_equal(self.cube, other.cube)
+    '''
     
     def __lt__(self, other):
         if not isinstance(other, HeuristicNode):
             return False
         return self.heuristic_value < other.heuristic_value
     
+    '''
     def __gt__(self, other):
         if not isinstance(other, HeuristicNode):
             return False
         return self.heuristic_value > other.heuristic_value
-
+    '''
 
 class RubikCube:
     resolved_cube = np.array([
@@ -112,7 +135,7 @@ class RubikCube:
             'B1': 'B'
         }
 
-    def __rotate_face(self, face, clockwise=True):
+    def __rotate_face4(self, face, clockwise=True):
         if clockwise:
             self.cube[face] = np.rot90(self.cube[face], -1)
         else:
@@ -266,12 +289,6 @@ class RubikCube:
             self.__z_right(0, 5)
         return self.cube
     
-    def move_list(self, moves_list):
-        moves = moves_list.split()
-        for move in moves:
-            if move in self.movements:
-                self.movements[move]()
-    
     # Funcion shuffle para revolver el cubo
     def shuffle(self, N):
         for _ in range(N):
@@ -300,6 +317,8 @@ class RubikCube:
                 self.z_front_left()
             elif movement == 11:
                 self.z_front_right()  
+            
+            print(movement)
 
     # Funcion shuffle para revolver el cubo
     def shuffle_unrepeat(self, N):
@@ -324,7 +343,7 @@ class RubikSolver:
 
     # BFS sin heuristica
     def breadth_first_search(self):
-        node = Node(self.cube.cube)
+        node = Node(np.copy(self.cube.cube))
         visited = set()
         q = Queue()
         q.put(node)
@@ -337,19 +356,19 @@ class RubikSolver:
                 return current_node.path
  
             for move in self.cube.movements.keys():
-                next_cube = RubikCube()
-                next_cube.cube = np.copy(current_node.cube)
-                next_cube.movements[move]()
+                next_cube = np.copy(current_node.cube)
+                self.cube.cube = next_cube
+                self.cube.movements[move]()
 
-                if tuple(next_cube.cube.flatten()) not in visited:
-                    next_node = Node(next_cube.cube)
+                if tuple(self.cube.cube.flatten()) not in visited:
+                    next_node = Node(np.copy(self.cube.cube))
                     next_node.path = current_node.path + [move]
                     q.put(next_node)
                     visited.add(tuple(next_node.cube.flatten()))
     
     # BFS con heuristica
     def best_first_search(self, heuristic):
-        node = HeuristicNode(self.cube.cube)
+        node = HeuristicNode(np.copy(self.cube.cube))
         target_node = HeuristicNode(RubikCube.resolved_cube)
         node.heuristic_value = node.calculate_heuristic(heuristic, target_node)
         visited = set()
@@ -359,30 +378,56 @@ class RubikSolver:
         
         while not q.empty():
             current_node = q.get()
-
             if current_node.is_cube_solved(RubikCube.resolved_cube):
                 return current_node.path
             
             for move in self.cube.movements.keys():
-                next_cube = RubikCube()
-                next_cube.cube = np.copy(current_node.cube)
-                next_cube.movements[move]()
-            
-                if tuple(next_cube.cube.flatten()) not in visited:
-                    next_node = HeuristicNode(next_cube.cube)
+                next_cube = np.copy(current_node.cube)
+                self.cube.cube = next_cube
+                self.cube.movements[move]()
+
+                if tuple(self.cube.cube.flatten()) not in visited:
+                    next_node = HeuristicNode(np.copy(self.cube.cube))
                     next_node.heuristic_value = next_node.calculate_heuristic(heuristic, target_node)
                     next_node.path = current_node.path + [move]
                     q.put(next_node)
                     visited.add(tuple(next_node.cube.flatten()))
 
 
+    def a_star(self, heuristic):
+        target_node = Node_A_Star(RubikCube.resolved_cube)
+        node = Node_A_Star(np.copy(self.cube.cube))  
+        node.heuristic_value = node.calculate_heuristic(heuristic, target_node)
+        visited = set()
+        q = PriorityQueue()
+        q.put((node.total, node))
+        visited.add(tuple(node.cube.flatten()))
+        
+        while not q.empty():
+            _, current_node = q.get()
+            visited.add(tuple(current_node.cube.flatten()))
+
+            if current_node.is_cube_solved(RubikCube.resolved_cube):
+                return current_node.path
+            
+            for move in self.cube.movements.keys():
+                next_cube = np.copy(current_node.cube)
+                self.cube.cube = next_cube
+                self.cube.movements[move]()
+                
+                if tuple(self.cube.cube.flatten()) not in visited:
+                    next_node = Node_A_Star(np.copy(self.cube.cube))
+                    next_node.heuristic_value = next_node.calculate_heuristic(heuristic, target_node)
+                    next_node.path = current_node.path + [move]
+                    next_node.distance = current_node.distance + 1  # Incrementar la distancia
+                    next_node.total = next_node.heuristic_value + next_node.distance  # Recalcular el total
+                    q.put((next_node.total, next_node))
+
+
     
 rubik = RubikSolver()
-# rubik.cube.shuffle(3)  # Revuelve el cubo con movimientos aleatorios
-moves = "R L B F"
-rubik.cube.move_list(moves)
+rubik.cube.shuffle(5)  # Revuelve el cubo con movimientos aleatorios
 print(rubik.cube.cube)
 print('\n')
 solution = rubik.breadth_first_search()
-
 print(solution)
