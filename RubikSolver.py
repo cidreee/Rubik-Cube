@@ -42,7 +42,7 @@ class Heuristics:
     @staticmethod
     def esquinas(node1, node2):
         sum = 15
-        for i in range(6):  # Para cada cara
+        for i in range(5):  # Para cada cara
             face1 = node1.cube[i]
             face2 = node2.cube[i]
             
@@ -372,6 +372,9 @@ class RubikCube:
     
     
 class RubikSolver:
+
+    INF = float("inf")
+
     def __init__(self):
         self.cube = RubikCube()
 
@@ -457,13 +460,66 @@ class RubikSolver:
                     next_node.distance = current_node.distance + 1  # Incrementar la distancia
                     next_node.total = next_node.heuristic_value + next_node.distance  # Recalcular el total
                     q.put(next_node)
+    
+        #IDAStar
+    def iterative_deepening_A_star(self, heuristic):
+        start_node = Node_A_Star(np.copy(self.cube.cube))  
+        end_configuration = Node_A_Star(RubikCube.resolved_cube)
+        start_node.calculate_heuristic(heuristic, end_configuration)
+        bound = start_node.heuristic_value
+        path = [start_node]
+        while True:
+            t = self.__search(path, 0, bound, heuristic, end_configuration)
+            if t == True:
+                return self.path
+            if t == RubikSolver.INF:
+                return None
+            bound = t
+
+            
+    def __search(self, path, g, bound, heuristic, end_configuration):
+        path_f = path
+        node: Node_A_Star = path_f[-1]
+        node.calculate_heuristic(heuristic, end_configuration)
+        f = node.distance + node.heuristic_value
+        if f > bound:
+            return f
+        if node.is_cube_solved(RubikCube.resolved_cube):
+            self.path = node.path
+            return True
+        min = RubikSolver.INF
+        for succ in self.__sucessors(node, heuristic):
+            if succ not in path:
+                path_f.append(succ)
+                t = self.__search(path, node.distance + node.heuristic_value + 1, bound, heuristic, end_configuration)
+                if t == True:
+                    return True
+                if t < min:
+                    min = t
+                path.pop()
+        return min
+        
+    def __sucessors(self, state, heuristic):
+        current_state = state
+        next_states = []
+        end_configuration = Node_A_Star(RubikCube.resolved_cube)
+        for move in self.cube.movements.keys():
+            next_cube =  np.copy(current_state.cube)
+            self.cube.cube = next_cube
+            self.cube.movements[move]()
+            neighbor_node = Node_A_Star(self.cube.cube)  
+            neighbor_node.path = current_state.path + [move]
+            neighbor_node.calculate_heuristic(heuristic, end_configuration)
+            neighbor_node.distance = current_state.distance + 1
+            next_states.append(neighbor_node)
+        return next_states
 
 
     
 rubik = RubikSolver()
-rubik.cube.move_list("U1 R1 D U1 F1 L1 U1 F1 B1 U L R L U R1")
-#rubik.cube.shuffle(15)  # Revuelve el cubo con movimientos aleatorios
+rubik.cube.move_list("U1 R1 D")
+#rubik.cube.shuffle(10)  # Revuelve el cubo con movimientos aleatorios
 print(rubik.cube.cube)
 print('\n')
-solution = rubik.a_star(Heuristics.cruz)
+solution = rubik.iterative_deepening_A_star(Heuristics.cruz)
 print(solution)
