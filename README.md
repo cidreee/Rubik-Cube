@@ -56,3 +56,40 @@ This project provides a framework to solve a Rubik's Cube through multiple heuri
 Install `numpy` by running:
 ```bash
 pip install numpy
+
+
+# Usage
+Clone the repository:
+
+bash
+Copiar código
+git clone https://github.com/yourusername/rubik-cube-solver.git
+cd rubik-cube-solver
+Run the solver by creating a RubikCube instance, shuffling the cube, and executing a solver algorithm. Here’s an example code snippet:
+
+python
+Copiar código
+from rubik_cube_solver import RubikCube, RubikSolver
+
+# Initialize the Rubik's Cube
+cube = RubikCube()
+
+# Shuffle the cube with 20 moves
+cube.shuffle(20)
+
+# Initialize the solver and run Breadth-First Search
+solver = RubikSolver()
+solution_path = solver.breadth_first_search()
+
+# Display the solution
+print("Solution Path:", solution_path)
+Heuristic Options: Use heuristic functions by passing them to calculate_heuristic to prioritize moves based on cube states.
+
+Class Overview
+Heuristics: Defines heuristic functions for pathfinding and cube state evaluation.
+Node and Node_A_Star: Represent the state of the cube with attributes for distance and path tracking.
+RubikCube: Implements the cube model, movements, and shuffling.
+RubikSolver: Contains the solver algorithms, including BFS and future expansions.
+License
+This project is open-source and available under the MIT License.
+
