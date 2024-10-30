@@ -56,13 +56,11 @@ This project provides a framework to solve a Rubik's Cube through multiple heuri
 Install `numpy` by running:
 ```bash
 pip install numpy
+```
+## Usage
+# Clone the repository:
 
-
-# Usage
-Clone the repository:
-
-bash
-Copiar código
+```bash
 git clone https://github.com/yourusername/rubik-cube-solver.git
 cd rubik-cube-solver
 Run the solver by creating a RubikCube instance, shuffling the cube, and executing a solver algorithm. Here’s an example code snippet:
