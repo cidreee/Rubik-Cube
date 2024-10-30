@@ -58,36 +58,31 @@ Install `numpy` by running:
 pip install numpy
 ```
 ## Usage
-# Clone the repository:
-
-```bash
-git clone https://github.com/yourusername/rubik-cube-solver.git
-cd rubik-cube-solver
-Run the solver by creating a RubikCube instance, shuffling the cube, and executing a solver algorithm. Here’s an example code snippet:
-
-python
-Copiar código
+1. **` Initialization: `**
+```python
 from rubik_cube_solver import RubikCube, RubikSolver
-
-# Initialize the Rubik's Cube
-cube = RubikCube()
-
-# Shuffle the cube with 20 moves
-cube.shuffle(20)
-
-# Initialize the solver and run Breadth-First Search
 solver = RubikSolver()
+```
+2. **`Shuffling the Cube:`**
+
+```python
+solver.cube.shuffle(20)  # Randomly shuffle the cube with 20 moves
+```
+3. **`Solving the Cube:`**
+
+```python
 solution_path = solver.breadth_first_search()
-
-# Display the solution
 print("Solution Path:", solution_path)
-Heuristic Options: Use heuristic functions by passing them to calculate_heuristic to prioritize moves based on cube states.
+```
+3. **`Applying Moves:`**
 
-Class Overview
-Heuristics: Defines heuristic functions for pathfinding and cube state evaluation.
-Node and Node_A_Star: Represent the state of the cube with attributes for distance and path tracking.
-RubikCube: Implements the cube model, movements, and shuffling.
-RubikSolver: Contains the solver algorithms, including BFS and future expansions.
-License
-This project is open-source and available under the MIT License.
-
+```python
+solver.cube.move_list("R U F R1 D1")
+```
+## Example
+```python
+solver = RubikSolver()
+solver.cube.shuffle(20)
+solution_path = solver.breadth_first_search()
+print("Solution Path:", solution_path)
+```
